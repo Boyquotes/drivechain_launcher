@@ -29,9 +29,9 @@ function buildchain {
     ./autogen.sh
 
     if [ $INCOMPATIBLE_BDB -ne 1 ]; then
-        ./configure
+        ./configure --with-incompatible-bdb # default for now since there is no command line args
     else
-        ./configure --with-incompatible-bdb
+        ./configure 
     fi
 
     if [ $? -ne 0 ]; then
