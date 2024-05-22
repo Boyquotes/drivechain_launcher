@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source ./config.sh
-source ./functions.sh
+source ./scripts/config.sh
+source ./scripts/functions.sh
 
 SKIP_CLONE=0
 SKIP_BUILD=0
@@ -71,11 +71,11 @@ if [ $SKIP_BUILD -ne 1 ]; then
         CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure --with-incompatible-bdb
     fi
 
-    make -j /usr/local/bin/nproc
+    make -j $(nproc) 
 
     fi
-    
-    make -j /usr/local/bin/nproc 
+
+    make -j $(nproc) 
 
     cd ..
 fi
