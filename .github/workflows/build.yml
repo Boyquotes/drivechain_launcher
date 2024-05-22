@@ -116,8 +116,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Make script executable
-        run: chmod +x ./scripts/drivechainintegration.sh || echo "Script not found, skipping chmod"
-
+        run: chmod +x ./scripts/drivechainintegration.sh || echo "Drivechain script not found, skipping chmod"
+        run: chmod +x ./scripts/functions.sh || echo "Function scrript not found, skipping chmod"        
+        run: chmod +x ./scripts/config.sh || echo "Config script not found, skipping chmod"
+        
       - name: Run Tests
         run: ./scripts/drivechainintegration.sh || echo "Script not found, skipping tests"
 

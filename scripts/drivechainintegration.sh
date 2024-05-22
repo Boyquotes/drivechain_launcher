@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Source the configuration and functions scripts
-source ./config.sh
-source ./functions.sh
+source ./scripts/config.sh
+source ./scripts/functions.sh
 
 # Read arguments
 SKIP_CLONE=0

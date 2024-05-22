@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 function startdrivechain {
     if [ $REINDEX -eq 1 ]; then
         echo "drivechain will be reindexed"
