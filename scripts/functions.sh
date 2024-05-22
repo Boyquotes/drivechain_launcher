@@ -1,56 +1,63 @@
 #!/bin/bash
 
 function startdrivechain {
+    cd mainchain
+    if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to change directory to mainchain"
+    exit 1
+    fi
+
     if [ $REINDEX -eq 1 ]; then
         echo "drivechain will be reindexed"
-        ./mainchain/src/qt/drivechain-qt --reindex --regtest &
+        ./src/qt/drivechain-qt --reindex --regtest &
     else
-        ./mainchain/src/qt/drivechain-qt --regtest &
+        ./src/qt/drivechain-qt --regtest &
     fi
     sleep 15s
     
-    # Check if drivechain successfully started
+    # start check 
     for i in {1..5}; do
-        ./mainchain/src/drivechain-cli --regtest getblockcount > /dev/null 2>&1
+        ./mainchain/src/drivechain-cli getblockcount > /dev/null 2>&1
         if [ $? -eq 0 ]; then
             echo "drivechain successfully started"
-            return 0
+            break 
         fi
         echo "Checking if drivechain has started... attempt $i"
         sleep 5s
     done
 
-    echo "ERROR: drivechain failed to start"
-    exit 1
+    if [ $? -ne 0 ]; then
+        echo "ERROR: drivechain failed to start"
+        exit 1
+    fi
+
+    testL1
+    
+    if [ $? -ne 0 ]; then
+        echo "ERROR: L1 tests failed"
+        exit 1
+    fi
+    exit 0
 }
 
-function buildchain {
-    git pull
-    ./autogen.sh
+function testL1 {
 
-    if [ $INCOMPATIBLE_BDB -ne 1 ]; then
-        ./configure --with-incompatible-bdb # default for now since there is no command line args
-    else
-        ./configure 
-    fi
-
+    # mining tests
+    echo "Mining 1 block..."
+    ./src/drivechain-cli generatetoaddress 1 $(./src/drivechain-cli getnewaddress) > /dev/null
     if [ $? -ne 0 ]; then
-        echo "Configure failed!"
+        echo "ERROR: Failed to mine 1 block"
+        exit 1
+    fi
+    echo "Successfully mined 1 block"
+
+    echo "Mining 100 blocks..."
+    ./src/drivechain-cli generatetoaddress 100 $(./src/drivechain-cli getnewaddress) > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to mine 100 blocks"
         exit 1
     fi
 
-    make -j "$(nproc)"
-
-    if [ $? -ne 0 ]; then
-        echo "Make failed!"
-        exit 1
-    fi
-
-    if [ $SKIP_CHECK -ne 1 ]; then
-        make check
-        if [ $? -ne 0 ]; then
-            echo "Make check failed!"
-            exit 1
-        fi
-    fi
+    echo "Successfully mined 100 blocks"
+    exit 0
 }

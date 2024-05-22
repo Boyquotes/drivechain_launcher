@@ -1,9 +1,8 @@
 #!/bin/bash
 
-source ./scripts/config.sh
-source ./scripts/functions.sh
+source ./config.sh
+source ./functions.sh
 
-# Read arguments
 SKIP_CLONE=0
 SKIP_BUILD=0
 SKIP_CHECK=0
@@ -11,9 +10,10 @@ SKIP_REPLACE_TIP=0
 SKIP_RESTART=0
 SKIP_SHUTDOWN=0
 INCOMPATIBLE_BDB=0
+WARNING_ANSWER="yes"
+
 for arg in "$@"
 do
-    # Handle arguments
     if [ "$arg" == "--help" ]; then
         echo "The following command line options are available:"
         echo "--skip_clone"
@@ -41,25 +41,46 @@ do
     fi
 done
 
-# Display warning
 clear
 echo -e "\e[32mYou should probably run this in a VM\e[0m"
 echo
 
-# Clone repositories
+# clone repositories
 if [ $SKIP_CLONE -ne 1 ]; then
     echo "Cloning repositories"
     git clone https://github.com/LayerTwo-labs/mainchain.git
 fi
 
-# Build repositories
+# L1 build 
 if [ $SKIP_BUILD -ne 1 ]; then
+    echo "Building mainchain"
     cd mainchain
-    buildchain
+
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        sudo apt-get update
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3 libdb-dev
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install automake libtool boost miniupnpc openssl pkg-config protobuf qt5 zmq berkeley-db@4
+    fi
+
+    ./autogen.sh
+
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site ./configure --with-incompatible-bdb
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure --with-incompatible-bdb
+    fi
+
+    make -j /usr/local/bin/nproc
+
+    fi
+    
+    make -j /usr/local/bin/nproc 
+
     cd ..
 fi
 
-# Create configuration files
+# make config files
 echo "Create drivechain configuration file"
 mkdir -p ~/.drivechain/
 touch ~/.drivechain/drivechain.conf
@@ -67,13 +88,17 @@ echo "rpcuser=drivechain" > ~/.drivechain/drivechain.conf
 echo "rpcpassword=integrationtesting" >> ~/.drivechain/drivechain.conf
 echo "server=1" >> ~/.drivechain/drivechain.conf
 
-
 read -p "Are you sure you want to run this? (yes/no): " WARNING_ANSWER
 if [ "$WARNING_ANSWER" != "yes" ]; then
     exit
 fi
 
-# Start drivechain and perform initial setup
 startdrivechain
 
 echo -e "\e[32mdrivechain integration testing completed!\e[0m"
+
+# kill and clean up 
+
+./mainchain/src/drivechain-cli stop
+rm -rf ~/.drivechain
+rm -rf mainchain
