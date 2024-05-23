@@ -111,14 +111,14 @@ echo "rpcuser=drivechain" > ~/.drivechain/drivechain.conf
 echo "rpcpassword=integrationtesting" >> ~/.drivechain/drivechain.conf
 echo "server=1" >> ~/.drivechain/drivechain.conf
 
-read -p "Are you sure you want to run this? (yes/no): " WARNING_ANSWER
-if [ "$WARNING_ANSWER" != "yes" ]; then
-    exit
-fi
-
 startdrivechain
 
-echo -e "\e[32mdrivechain integration testing completed!\e[0m"
+if [$? -ne 0]; then
+    echo "drivechain failed to start"
+    exit 1
+fi
+
+echo "\e[32mdrivechain integration testing completed!\e[0m"
 
 ./mainchain/src/drivechain-cli stop
 rm -rf ~/.drivechain

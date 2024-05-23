@@ -1,12 +1,7 @@
 #!/bin/bash
 
 function startdrivechain {
-    cd mainchain
-    if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to change directory to mainchain"
-    exit 1
-    fi
-
+    
     if [ $REINDEX -eq 1 ]; then
         echo "drivechain will be reindexed"
         ./src/qt/drivechain-qt --reindex --regtest &
