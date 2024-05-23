@@ -45,7 +45,6 @@ clear
 echo -e "\e[32mYou should probably run this in a VM\e[0m"
 echo
 
-# clone repositories
 if [ $SKIP_CLONE -ne 1 ]; then
     echo "Cloning repositories"
     git clone https://github.com/LayerTwo-labs/mainchain.git
@@ -58,29 +57,53 @@ if [ $SKIP_BUILD -ne 1 ]; then
 
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         sudo apt-get update
-        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3 libdb-dev
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3
+
+        # Download and build dependencies
+        make -C ./depends download-linux
+        make -C ./depends -j4
+
+
+        ./autogen.sh
+        CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site ./configure
+        make -j $(nproc)
+
+        echo $PWD
+        echo $LS
+
+
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        brew install automake libtool boost miniupnpc openssl pkg-config protobuf qt5 zmq berkeley-db@4
+        brew install automake libtool boost miniupnpc openssl pkg-config protobuf qt5 zmq
+
+        # Download and build dependencies
+        make -C ./depends download-osx
+        make -C ./depends -j4
+
+        # Configure and build the mainchain
+        ./autogen.sh
+        CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure
+        make -j $(sysctl -n hw.ncpu)
+
+
+    elif [[ "$OSTYPE" == "msys" ]]; then
+        sudo apt-get install g++-mingw-w64-x86-64 build-essential libtool autotools-dev automake libssl-dev libevent-dev pkg-config bsdmainutils curl git python3-setuptools python-is-python3
+
+        # Configure the Windows toolchain
+        sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+        # Download and build dependencies
+        make -C ./depends download-win
+        make -C ./depends HOST=x86_64-w64-mingw32 -j4
+
+        # Configure and build the mainchain
+        ./autogen.sh
+        CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure
+        make -j $(nproc)
+
     fi
-
-    ./autogen.sh
-
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site ./configure --with-incompatible-bdb
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure --with-incompatible-bdb
-    fi
-
-    make -j $(nproc) 
-
-    fi
-
-    make -j $(nproc) 
-
-    cd ..
 fi
 
-# make config files
+# Create drivechain configuration file
 echo "Create drivechain configuration file"
 mkdir -p ~/.drivechain/
 touch ~/.drivechain/drivechain.conf
@@ -96,8 +119,6 @@ fi
 startdrivechain
 
 echo -e "\e[32mdrivechain integration testing completed!\e[0m"
-
-# kill and clean up 
 
 ./mainchain/src/drivechain-cli stop
 rm -rf ~/.drivechain
