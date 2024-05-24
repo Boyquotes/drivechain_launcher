@@ -45,6 +45,7 @@ clear
 echo -e "\e[32mYou should probably run this in a VM\e[0m"
 echo
 
+# Clone repositories
 if [ $SKIP_CLONE -ne 1 ]; then
     echo "Cloning repositories"
     git clone https://github.com/LayerTwo-labs/mainchain.git
@@ -57,23 +58,18 @@ if [ $SKIP_BUILD -ne 1 ]; then
 
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         sudo apt-get update
-        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3 libdb-dev
 
         # Download and build dependencies
         make -C ./depends download-linux
         make -C ./depends -j4
 
-
+        # Configure and build the mainchain
         ./autogen.sh
-        CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site ./configure
+        CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site ./configure --with-incompatible-bdb
         make -j $(nproc)
-
-        echo $PWD
-        echo $LS
-
-
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        brew install automake libtool boost miniupnpc openssl pkg-config protobuf qt5 zmq
+        brew install automake libtool boost miniupnpc openssl pkg-config protobuf qt5 zmq berkeley-db@4
 
         # Download and build dependencies
         make -C ./depends download-osx
@@ -81,10 +77,8 @@ if [ $SKIP_BUILD -ne 1 ]; then
 
         # Configure and build the mainchain
         ./autogen.sh
-        CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure
+        CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure --with-incompatible-bdb
         make -j $(sysctl -n hw.ncpu)
-
-
     elif [[ "$OSTYPE" == "msys" ]]; then
         sudo apt-get install g++-mingw-w64-x86-64 build-essential libtool autotools-dev automake libssl-dev libevent-dev pkg-config bsdmainutils curl git python3-setuptools python-is-python3
 
@@ -97,10 +91,13 @@ if [ $SKIP_BUILD -ne 1 ]; then
 
         # Configure and build the mainchain
         ./autogen.sh
-        CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure
+        CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure --with-incompatible-bdb
         make -j $(nproc)
-
     fi
+
+    # Move built binaries for consistency
+    mv src/qt/drivechain-qt* src/drivechain-qt*
+    cd ..
 fi
 
 # Create drivechain configuration file
@@ -111,15 +108,16 @@ echo "rpcuser=drivechain" > ~/.drivechain/drivechain.conf
 echo "rpcpassword=integrationtesting" >> ~/.drivechain/drivechain.conf
 echo "server=1" >> ~/.drivechain/drivechain.conf
 
-startdrivechain
-
-if [$? -ne 0]; then
-    echo "drivechain failed to start"
-    exit 1
+read -p "Are you sure you want to run this? (yes/no): " WARNING_ANSWER
+if [ "$WARNING_ANSWER" != "yes" ]; then
+    exit
 fi
 
-echo "\e[32mdrivechain integration testing completed!\e[0m"
+startdrivechain -conf=$HOME/.drivechain/drivechain.conf
 
-./mainchain/src/drivechain-cli stop
+echo -e "\e[32mdrivechain integration testing completed!\e[0m"
+
+# Kill and clean up 
+./mainchain/src/drivechain-cli stop -conf=$HOME/.drivechain/drivechain.conf
 rm -rf ~/.drivechain
 rm -rf mainchain
