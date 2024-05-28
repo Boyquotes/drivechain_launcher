@@ -57,7 +57,7 @@ if [ $SKIP_BUILD -ne 1 ]; then
     echo "Building mainchain"
     cd mainchain
 
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         sudo apt-get update
         sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3
 
@@ -69,32 +69,32 @@ if [ $SKIP_BUILD -ne 1 ]; then
         ./autogen.sh
         CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site ./configure 
         make -j $(nproc)
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        brew install automake libtool boost miniupnpc openssl pkg-config protobuf qt5 zmq
+    # elif [[ "$OSTYPE" == "darwin"* ]]; then
+    #     brew install automake libtool boost miniupnpc openssl pkg-config protobuf qt5 zmq
 
-        # Download and build dependencies
-        make -C ./depends download-osx
-        make -C ./depends -j4
+    #     # Download and build dependencies
+    #     make -C ./depends download-osx
+    #     make -C ./depends -j4
 
-        # Configure and build the mainchain
-        ./autogen.sh
-        CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure
-        make -j $(sysctl -n hw.ncpu)
-    elif [[ "$OSTYPE" == "msys" ]]; then
-        sudo apt-get install g++-mingw-w64-x86-64 build-essential libtool autotools-dev automake libssl-dev libevent-dev pkg-config bsdmainutils curl git python3-setuptools python-is-python3
+    #     # Configure and build the mainchain
+    #     ./autogen.sh
+    #     CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure
+    #     make -j $(sysctl -n hw.ncpu)
+    # elif [[ "$OSTYPE" == "msys" ]]; then
+    #     sudo apt-get install g++-mingw-w64-x86-64 build-essential libtool autotools-dev automake libssl-dev libevent-dev pkg-config bsdmainutils curl git python3-setuptools python-is-python3
 
-        # Configure the Windows toolchain
-        sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+    #     # Configure the Windows toolchain
+    #     sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
 
-        # Download and build dependencies
-        make -C ./depends download-win
-        make -C ./depends HOST=x86_64-w64-mingw32 -j4
+    #     # Download and build dependencies
+    #     make -C ./depends download-win
+    #     make -C ./depends HOST=x86_64-w64-mingw32 -j4
 
-        # Configure and build the mainchain
-        ./autogen.sh
-        CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure
-        make -j $(nproc)
-    fi
+    #     # Configure and build the mainchain
+    #     ./autogen.sh
+    #     CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure
+    #     make -j $(nproc)
+    # fi
 
     # Move built binaries for consistency
     mv src/qt/drivechain-qt* src/drivechain-qt*
