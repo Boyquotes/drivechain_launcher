@@ -34,6 +34,7 @@ function startdrivechain {
     exit 0
 }
 
+# Function to perform L1 tests
 function testL1 {
     config_file=$1
 
