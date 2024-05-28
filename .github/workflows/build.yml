@@ -11,6 +11,9 @@ on:
 jobs:
   build-macos:
     runs-on: macos-latest
+    env:
+      RPC_USER: "L2L"
+      RPC_PASSWORD: "drivechain"
     steps:
       - uses: actions/checkout@v3
 
@@ -120,6 +123,12 @@ jobs:
              chmod +x ./scripts/drivechainintegration.sh || echo "Drivechain script not found, skipping chmod"
              chmod +x ./scripts/functions.sh || echo "Function scrript not found, skipping chmod"        
              chmod +x ./scripts/config.sh || echo "Config script not found, skipping chmod"
+      - name: Create drivechain configuration file
+        run: |
+          mkdir -p ~/.drivechain/
+          echo "rpcuser=${{ env.RPC_USER }}" > ~/.drivechain/drivechain.conf
+          echo "rpcpassword=${{ env.RPC_PASSWORD }}" >> ~/.drivechain/drivechain.conf
+          echo "server=1" >> ~/.drivechain/drivechain.conf
 
       - name: Run Tests
         run: ./scripts/drivechainintegration.sh || echo "Script not found, skipping tests"
