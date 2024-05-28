@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export RPC_USER="drivechain"
-export RPC_PASSWORD="integrationtesting"
+export RPC_PASSWORD="L2L"
 export RPC_HOST="127.0.0.1"
 export RPC_PORT="18443"
 export CONFIG_FILE="$HOME/.drivechain/drivechain.conf"
