@@ -30,24 +30,7 @@ function startdrivechain {
         echo "ERROR: drivechain failed to start with curl"
         exit 1
     fi
-
-    # Check if drivechain has started using CLI
-    for i in {1..5}; do
-        ./mainchain/src/drivechain-cli -conf=$CONFIG_FILE getblockcount > /dev/null
-        if [ $? -eq 0 ]; then
-            echo "drivechain cli successfully started"
-            break 
-        fi
-        echo "Checking if drivechain has started (cli)... attempt $i"
-        sleep 5s
-    done
-
-    if [ $? -ne 0 ]; then
-        echo "ERROR: drivechain failed to start with cli"
-        exit 1
-    fi
     
-    echo "drivechain node started successfully with both curl and cli"
 }
 
 
