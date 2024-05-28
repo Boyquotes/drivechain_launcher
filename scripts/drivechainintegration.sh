@@ -11,7 +11,6 @@ SKIP_RESTART=0
 SKIP_SHUTDOWN=0
 INCOMPATIBLE_BDB=0
 WARNING_ANSWER="yes"
-CONFIG_FILE="$HOME/.drivechain/drivechain.conf"
 
 for arg in "$@"
 do
@@ -57,9 +56,9 @@ if [ $SKIP_BUILD -ne 1 ]; then
     echo "Building mainchain"
     cd mainchain
 
-    # if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         sudo apt-get update
-        sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3
+        sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3
 
         # Download and build dependencies
         make -C ./depends download-linux
@@ -69,48 +68,54 @@ if [ $SKIP_BUILD -ne 1 ]; then
         ./autogen.sh
         CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site ./configure 
         make -j $(nproc)
-    # elif [[ "$OSTYPE" == "darwin"* ]]; then
-    #     brew install automake libtool boost miniupnpc openssl pkg-config protobuf qt5 zmq
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install automake libtool boost miniupnpc openssl pkg-config protobuf qt5 zmq
 
-    #     # Download and build dependencies
-    #     make -C ./depends download-osx
-    #     make -C ./depends -j4
+        # Download and build dependencies
+        make -C ./depends download-osx
+        make -C ./depends -j4
 
-    #     # Configure and build the mainchain
-    #     ./autogen.sh
-    #     CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure
-    #     make -j $(sysctl -n hw.ncpu)
-    # elif [[ "$OSTYPE" == "msys" ]]; then
-    #     sudo apt-get install g++-mingw-w64-x86-64 build-essential libtool autotools-dev automake libssl-dev libevent-dev pkg-config bsdmainutils curl git python3-setuptools python-is-python3
+        # Configure and build the mainchain
+        ./autogen.sh
+        CONFIG_SITE=$PWD/depends/x86_64-apple-darwin11/share/config.site ./configure
+        make -j $(sysctl -n hw.ncpu)
+    elif [[ "$OSTYPE" == "msys" ]]; then
+        sudo apt-get install g++-mingw-w64-x86-64 build-essential libtool autotools-dev automake libssl-dev libevent-dev pkg-config bsdmainutils curl git python3-setuptools python-is-python3
 
-    #     # Configure the Windows toolchain
-    #     sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+        # Configure the Windows toolchain
+        sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
 
-    #     # Download and build dependencies
-    #     make -C ./depends download-win
-    #     make -C ./depends HOST=x86_64-w64-mingw32 -j4
+        # Download and build dependencies
+        make -C ./depends download-win
+        make -C ./depends HOST=x86_64-w64-mingw32 -j4
 
-    #     # Configure and build the mainchain
-    #     ./autogen.sh
-    #     CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure
-    #     make -j $(nproc)
-    # fi
-
-    # Move built binaries for consistency
-    mv src/qt/drivechain-qt* src/drivechain-qt*
+        # Configure and build the mainchain
+        ./autogen.sh
+        CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure
+        make -j $(nproc)
+    fi
     cd ..
 fi
+
+# Create drivechain configuration file
+echo "Create drivechain configuration file"
+mkdir -p ~/.drivechain/
+touch ~/.drivechain/drivechain.conf
+echo "rpcuser=drivechain" >> ~/.drivechain/drivechain.conf
+echo "rpcpassword=L2L" >> ~/.drivechain/drivechain.conf
+echo "server=1" >> ~/.drivechain/drivechain.conf
 
 read -p "Are you sure you want to run this? (yes/no): " WARNING_ANSWER
 if [ "$WARNING_ANSWER" != "yes" ]; then
     exit
 fi
 
-startdrivechain -conf=$HOME/.drivechain/drivechain.conf
+startdrivechain
+
 
 echo -e "\e[32mdrivechain integration testing completed!\e[0m"
 
 # Kill and clean up 
-./mainchain/src/drivechain-cli stop -conf=$HOME/.drivechain/drivechain.conf
+./mainchain/src/drivechain-cli stop
 rm -rf ~/.drivechain
 rm -rf mainchain
