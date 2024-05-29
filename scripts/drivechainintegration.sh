@@ -111,6 +111,6 @@ startdrivechain
 echo -e "\e[32mdrivechain integration testing completed!\e[0m"
 
 # Kill and clean up 
-./mainchain/src/qt/drivechain-cli stop
+./mainchain/src/qt/drivechaind stop
 rm -rf ~/.drivechain
 rm -rf mainchain
